@@ -1,8 +1,8 @@
 import React, { useMemo, useState } from "react";
-import logoWhite from "./publish/img/psylogo_white.png";
-import imgLace from "./publish/img/lace.png";
-import imgYoroi from "./publish/img/yoroi.png";
-import imgMidnight from "./publish/img/midnight.png";
+import Header from "./components/Header";
+import Hero from "./components/Hero";
+import WalletModal from "./components/WalletModal";
+import Footer from "./components/Footer";
 
 type SupportedWallet = "lace";
 
@@ -18,6 +18,20 @@ const App: React.FC = () => {
     if (walletAddress.length <= 12) return walletAddress;
     return `${walletAddress.slice(0, 6)}...${walletAddress.slice(-6)}`;
   }, [walletAddress]);
+
+  const handleCopyAddress = async () => {
+    if (!walletAddress) {
+      alert("No wallet address to copy. Please connect first.");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(walletAddress);
+      alert("Wallet address copied.");
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Unknown error";
+      alert(`Failed to copy address: ${message}`);
+    }
+  };
 
   const handleConnect = async (wallet: SupportedWallet) => {
     setIsModalOpen(false);
@@ -69,161 +83,26 @@ const App: React.FC = () => {
 
   return (
     <>
-      <header>
-        <div className="container">
-          <nav className="navbar">
-            <a href="#" className="logo">
-              <img src={logoWhite} alt="PsycheScore Logo" />
-            </a>
-            <div className="nav-right">
-              <button id="theme-toggle" className="theme-toggle-btn">
-                <i className="fa-solid fa-moon"></i>
-              </button>
-              {isConnected && walletAddress ? (
-                <a
-                  href="#"
-                  className="btn btn-secondary wallet-address-btn"
-                  title={walletAddress}
-                >
-                  <span id="walletAddressDisplay">{shortWalletAddress}</span>
-                  <span className="hidden">{walletAddress}</span>
-                  <i
-                    className="fa-regular fa-copy copy-icon"
-                    id="copyWalletAddress"
-                  ></i>
-                </a>
-              ) : null}
-              {!isConnected ? (
-                <a href="#" className="btn btn-secondary">
-                  <i className="fa-solid fa-file-lines"></i>
-                  Whitepaper
-                </a>
-              ) : (
-                <button className="btn btn-primary" onClick={handleDisconnect}>
-                  <i className="fa-solid fa-wallet"></i>
-                  Disconnect
-                </button>
-              )}
-            </div>
-          </nav>
-        </div>
-      </header>
+      <Header
+        isConnected={isConnected}
+        walletAddress={walletAddress}
+        shortWalletAddress={shortWalletAddress}
+        onCopyAddress={handleCopyAddress}
+        onDisconnect={handleDisconnect}
+      />
       <div className="container">
-        <main className="hero-section">
-          {!isConnected && (
-            <div className="hero-content">
-              <h1>
-                Experience <span className="highlight">PsycheCredit</span> – The
-                decentralized protocol
-              </h1>
-              <p>
-                Unlock powerful AI tools for your business — deploy smart
-                chatbots, automate workflows, analyze data, and more with zero
-                coding. Scalable. Secure. Lightning fast.
-              </p>
-              <div className="cta-buttons">
-                {/* 4. Gắn sự kiện onClick để mở Popup */}
-                {!isConnected ? (
-                  <button
-                    className="btn btn-primary"
-                    id="connectWalletBtn"
-                    onClick={() => setIsModalOpen(true)}
-                  >
-                    <i className="fa-solid fa-wallet"></i> Connect wallet
-                  </button>
-                ) : (
-                  <button
-                    className="btn btn-secondary"
-                    onClick={handleDisconnect}
-                  >
-                    Disconnect
-                  </button>
-                )}
-
-                {!isConnected && (
-                  <a href="#" className="btn btn-secondary">
-                    Watch Demo
-                  </a>
-                )}
-              </div>
-            </div>
-          )}
-        </main>
-
-        <footer>
-          <div className="social-icons">
-            <a href="#">
-              <i className="fab fa-facebook-f"></i>
-            </a>
-            <a href="#">
-              <i className="fab fa-instagram"></i>
-            </a>
-            <a href="#">
-              <i className="fab fa-twitter"></i>
-            </a>
-            <a href="#">
-              <i className="fab fa-telegram"></i>
-            </a>
-          </div>
-          <div className="copyright">
-            <p>&copy; 2025. PsycheScore</p>
-          </div>
-        </footer>
+        <Hero
+          isConnected={isConnected}
+          onOpenConnect={() => setIsModalOpen(true)}
+        />
+        <Footer />
       </div>
 
-      {isModalOpen && (
-        <div
-          className="wallet-popup-overlay"
-          id="walletPopup"
-          onClick={(e) => {
-            if (e.target === e.currentTarget) {
-              setIsModalOpen(false);
-            }
-          }}
-        >
-          <div className="wallet-popup">
-            <div className="popup-header">
-              <h2>Connect Wallet</h2>
-              {/* Nút đóng popup */}
-              <button
-                className="close-btn"
-                onClick={() => setIsModalOpen(false)}
-              >
-                &times;
-              </button>
-            </div>
-            <p className="popup-subheading">Choose how you want to connect</p>
-            <ul className="wallet-list">
-              <li
-                className="wallet-item"
-                onClick={() => void handleConnect("lace")}
-                style={{ cursor: "pointer" }}
-              >
-                <a>
-                  <img src={imgLace} alt="Lace Wallet" />
-                  Lace wallet
-                </a>
-              </li>
-              <li className="wallet-item">
-                <a href="#">
-                  <img src={imgYoroi} alt="Yoroi Wallet" />
-                  Yoroi (coming soon)
-                </a>
-              </li>
-
-              <li
-                className="wallet-item"
-                style={{ cursor: "not-allowed", opacity: 0.6 }}
-              >
-                <a>
-                  <img src={imgMidnight} alt="Midnight" />
-                  Midnight (coming soon)
-                </a>
-              </li>
-            </ul>
-          </div>
-        </div>
-      )}
+      <WalletModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onConnectLace={() => void handleConnect("lace")}
+      />
     </>
   );
 };
